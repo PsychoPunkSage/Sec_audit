@@ -30,4 +30,21 @@ contract PasswordStoreTest is Test {
         vm.expectRevert(PasswordStore.PasswordStore__NotOwner.selector);
         passwordStore.getPassword();
     }
+
+    // @Audit what about non_owner_can_set_password
+    function test_nan_owner_can_set_password(address randomAddress) public {
+        vm.prank(owner);
+        string memory owner_pass = passwordStore.getPassword();
+
+        string memory hackedPassword = "HackedPassword";
+        vm.prank(randomAddress);
+        passwordStore.setPassword(hackedPassword);
+
+        vm.prank(owner);
+        string memory owner_pass_now = passwordStore.getPassword();
+
+        // To prove:: owner_pass_now != Password set by owner (i.e. owner_pass) + owner_pass_now == HackedPassword
+        assert(keccak256(abi.encodePacked(owner_pass)) != keccak256(abi.encodePacked(owner_pass_now)));
+        assert(keccak256(abi.encodePacked(hackedPassword)) == keccak256(abi.encodePacked(owner_pass_now)));
+    }
 }
