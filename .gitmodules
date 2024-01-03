@@ -1,0 +1,3 @@
+[submodule "Checksums/2-puppy-raffle-audit/lib/forge-std"]
+	path = Checksums/2-puppy-raffle-audit/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
