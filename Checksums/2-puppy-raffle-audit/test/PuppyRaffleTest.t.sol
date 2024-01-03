@@ -40,6 +40,7 @@ contract PuppyRaffleTest is Test {
         vm.expectRevert("PuppyRaffle: Must send enough to enter raffle");
         puppyRaffle.enterRaffle(players);
     }
+    
 
     function testCanEnterRaffleMany() public {
         address[] memory players = new address[](2);
@@ -212,5 +213,36 @@ contract PuppyRaffleTest is Test {
         puppyRaffle.selectWinner();
         puppyRaffle.withdrawFees();
         assertEq(address(feeAddress).balance, expectedPrizeAmount);
+    }
+    
+    // DOS
+    function testDOSAttackEnterRaffle() public {
+        vm.txGasPrice(1);
+        // Gas cost #1
+        // making 100 players
+        uint256 n = 100;
+        address[] memory players = new address[](n);
+        for (uint256 i = 0; i < n; i++) {
+            players[i] = address(i);
+        }
+        uint256 gasStart = gasleft();
+        puppyRaffle.enterRaffle{value: entranceFee*100}(players);
+        // Gas cost #2
+        uint256 gasEnd = gasleft();
+        uint256 gasUsedFirst = (gasStart-gasEnd)*tx.gasprice;
+
+        console.log("1st 100 players: ",gasUsedFirst);
+        // assert(gasEnd > gasStart);
+        for (uint256 i = 0; i < n; i++) {
+            players[i] = address(i + n);
+        }
+        uint256 gasStart1 = gasleft();
+        puppyRaffle.enterRaffle{value: entranceFee*100}(players);
+        // Gas cost #2
+        uint256 gasEnd1 = gasleft();
+        uint256 gasUsedFirst1 = (gasStart1-gasEnd1)*tx.gasprice;
+        console.log("2nd 100 players: ",gasUsedFirst1);
+
+        assert(gasUsedFirst1>gasUsedFirst);
     }
 }
