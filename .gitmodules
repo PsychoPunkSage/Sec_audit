@@ -1,3 +1,9 @@
 [submodule "Checksums/2-puppy-raffle-audit/lib/forge-std"]
 	path = Checksums/2-puppy-raffle-audit/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "Checksums/2-puppy-raffle-audit/lib/openzeppelin-contracts"]
+	path = Checksums/2-puppy-raffle-audit/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "Checksums/2-puppy-raffle-audit/lib/base64"]
+	path = Checksums/2-puppy-raffle-audit/lib/base64
+	url = https://github.com/Brechtpd/base64
