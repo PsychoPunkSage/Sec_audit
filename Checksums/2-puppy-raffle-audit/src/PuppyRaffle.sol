@@ -80,6 +80,7 @@ contract PuppyRaffle is ERC721, Ownable {
         // @Q: were "custom reverts" for 0.7.6
         require(msg.value == entranceFee * newPlayers.length, "PuppyRaffle: Must send enough to enter raffle");
         for (uint256 i = 0; i < newPlayers.length; i++) {
+            // @Q what resets it
             players.push(newPlayers[i]);
         }
 
@@ -100,6 +101,7 @@ contract PuppyRaffle is ERC721, Ownable {
         require(playerAddress == msg.sender, "PuppyRaffle: Only the player can refund");
         require(playerAddress != address(0), "PuppyRaffle: Player already refunded, or is not active");
 
+        // @Audit:: Reentrancy Attack
         payable(msg.sender).sendValue(entranceFee);
 
         players[playerIndex] = address(0);
@@ -115,6 +117,8 @@ contract PuppyRaffle is ERC721, Ownable {
                 return i;
             }
         }
+        // @Audit...
+        // what if Player index:: 0
         return 0;
     }
 
