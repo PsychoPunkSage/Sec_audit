@@ -304,7 +304,7 @@ contract PuppyRaffleTest is Test {
         address sender = makeAddr("sender");
         vm.deal(sender, 2 ether);
 
-        vm.expectRevert();
+        vm.expectRevert(); // as puppyRaffle => NO Fallback...
         vm.prank(sender);
         (bool success, ) = payable(address(puppyRaffle)).call{value: 1 ether}("");
         require(success);

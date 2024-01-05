@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+// @Audit:: Floating pragma is Bad.... 0.7.6
 pragma solidity ^0.7.6;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -21,6 +22,7 @@ contract PuppyRaffle is ERC721, Ownable {
     uint256 public immutable entranceFee;
 
     address[] public players;
+    // @Audit- Immutable as it can't be changed..... || Cheap
     uint256 public raffleDuration;
     uint256 public raffleStartTime;
     address public previousWinner;
@@ -35,6 +37,7 @@ contract PuppyRaffle is ERC721, Ownable {
     mapping(uint256 => string) public rarityToName;
 
     // Stats for the common puppy (pug)
+    // @Audit-G:: should be constant
     string private commonImageUri = "ipfs://QmSsYRx3LpDAb1GZQm7zZ1AuHZjfbPkD6J7s9r41xu1mf8";
     uint256 public constant COMMON_RARITY = 70;
     string private constant COMMON = "common";
@@ -59,6 +62,7 @@ contract PuppyRaffle is ERC721, Ownable {
     /// @param _raffleDuration the duration in seconds of the raffle
     constructor(uint256 _entranceFee, address _feeAddress, uint256 _raffleDuration) ERC721("Puppy Raffle", "PR") {
         entranceFee = _entranceFee;
+        // @Audit-I: Do address(0) check
         feeAddress = _feeAddress;
         raffleDuration = _raffleDuration;
         raffleStartTime = block.timestamp;
@@ -86,11 +90,13 @@ contract PuppyRaffle is ERC721, Ownable {
 
         // Check for duplicates
         // @Audit:: DoS Attack [High]
+        // @Audit-G:: uints256 playersLength = players.length
         for (uint256 i = 0; i < players.length - 1; i++) {
             for (uint256 j = i + 1; j < players.length; j++) {
                 require(players[i] != players[j], "PuppyRaffle: Duplicate player");
             }
         }
+        // @Audit-I: What if newplayers.length = 0
         emit RaffleEnter(newPlayers);
     }
 
@@ -105,6 +111,7 @@ contract PuppyRaffle is ERC721, Ownable {
         payable(msg.sender).sendValue(entranceFee);
 
         players[playerIndex] = address(0);
+        // @Audit-low: event manipulation
         emit RaffleRefunded(playerAddress);
     }
 
@@ -169,9 +176,11 @@ contract PuppyRaffle is ERC721, Ownable {
 
     /// @notice this function will withdraw the fees to the feeAddress
     function withdrawFees() external {
+        // @Audit:: Mishandeling of ETH
         require(address(this).balance == uint256(totalFees), "PuppyRaffle: There are currently players active!");
         uint256 feesToWithdraw = totalFees;
         totalFees = 0;
+        // slither-disable-next-line arbitrary-send-eth
         (bool success,) = feeAddress.call{value: feesToWithdraw}("");
         require(success, "PuppyRaffle: Failed to withdraw fees");
     }
@@ -184,6 +193,7 @@ contract PuppyRaffle is ERC721, Ownable {
     }
 
     /// @notice this function will return true if the msg.sender is an active player
+    // @Audit:: Not USED?? (I/G)
     function _isActivePlayer() internal view returns (bool) {
         for (uint256 i = 0; i < players.length; i++) {
             if (players[i] == msg.sender) {
