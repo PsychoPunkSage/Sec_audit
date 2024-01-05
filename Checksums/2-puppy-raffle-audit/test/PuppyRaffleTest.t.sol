@@ -243,7 +243,7 @@ contract PuppyRaffleTest is Test {
     }
 
     // Reentrancy
-    function testReentrancyAttack() public playerEntered {
+    function testReentrancyAttack() public {
         address[] memory players = new address[](4);
         players[0] = address(10);
         players[1] = address(2);
@@ -279,6 +279,35 @@ contract PuppyRaffleTest is Test {
             "Puppy Contract Balance (End): ",
             address(puppyRaffle).balance
         );
+    }
+
+    function testOverflowFees() public {
+        address[] memory players = new address[](300);
+        for (uint256 i=0; i< 300; i++) {
+            players[i] = address(i);
+        }
+        puppyRaffle.enterRaffle{value: entranceFee*300}(players);
+        vm.warp(block.timestamp + duration + 1);
+        vm.roll(block.number + 1);
+        puppyRaffle.selectWinner();
+
+        uint256 a_fee = (entranceFee*300*20)/100;
+        console.log("uint64 (max)    ", type(uint64).max);
+        console.log("Fees: (Contrat) ", puppyRaffle.totalFees());
+        console.log("Fees: (Actual)  ", a_fee);
+
+        assert(a_fee > puppyRaffle.totalFees());
+        assert(a_fee > type(uint64).max);
+    }
+
+    function testCantSendMoneyToRaffle() public {
+        address sender = makeAddr("sender");
+        vm.deal(sender, 2 ether);
+
+        vm.expectRevert();
+        vm.prank(sender);
+        (bool success, ) = payable(address(puppyRaffle)).call{value: 1 ether}("");
+        require(success);
     }
 }
 
