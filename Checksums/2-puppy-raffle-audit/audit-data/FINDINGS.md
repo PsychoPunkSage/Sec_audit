@@ -129,7 +129,22 @@ Logs:
 
 ### Recommended Mitigation:
 
-> Always try to update state before making any external calls.<br>
+> Always try to update state before making any external calls. Additionally Events emission should also be done before hand.<br>
+
+```diff
+function refund(uint256 playerIndex) public {
+        address playerAddress = players[playerIndex];
+        require(playerAddress == msg.sender, "PuppyRaffle: Only the player can refund");
+        require(playerAddress != address(0), "PuppyRaffle: Player already refunded, or is not active");
+
++       players[playerIndex] = address(0);
++       emit RaffleRefunded(playerAddress);
+        payable(msg.sender).sendValue(entranceFee);
+-       players[playerIndex] = address(0);
+-       emit RaffleRefunded(playerAddress);
+    }
+```
+
 > Can use `Openzeppelin::ReentrancyGuard`
 
 
@@ -240,6 +255,35 @@ function enterRaffle(address[] memory newPlayers) public payable {
 - pragma solidity ^0.7.6;
 + pragma solidity 0.7.6;
 ```
+
+## [L-2] `PuppyRaffle::getActivePlayerIndex` returns "0" for non-existent players but for players at index 0, the player might incorrectly think that they haben't entered raffle.
+
+### Description:
+> If a player is already in the `PuppyRaffle::players` at index = 0, `PuppyRaffle::getActivePlayerIndex` will return 0, according to `natspec`, it will also return "0" if player Doesn't exist. This will cause confusion for some participants.
+
+```javascript
+@>  /// @return the index of the player in the array, if they are not active, it returns 0
+    function getActivePlayerIndex(address player) external view returns (uint256) {
+        for (uint256 i = 0; i < players.length; i++) {
+            if (players[i] == player) {
+                return i;
+            }
+        }
+@>      return 0;
+    }
+```
+
+### Impact: 
+> The player might incorrectly think that they haven't entered raffle and will try to re-enter the raffle again, wasting gas.
+
+### Proof of Concept:
+1. User enters the raffle, they are the first entrants.
+2. `PuppyRaffle::getActivePlayerIndex` will return 0 
+3. The user will think that they haven't entered because of function docs.
+
+### Recommended Mitigation:
+1. Easiest recommendation is to revert the function if player doesn't exist.
+2. The fucntion can return `int256` instead, here the function can return "-1" if the players is not active.
 
 
 ## [G-1] Unchanged state variables should be marked as `constant` or `immutable`
