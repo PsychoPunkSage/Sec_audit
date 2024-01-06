@@ -352,7 +352,43 @@ function enterRaffle(address[] memory newPlayers) public payable {
 
 ```
 
-## [M-2] Smart Contract wallets raffle winner without a `receive` and `fallback` function might cause problems, this will block the start of new contest
+## [M-2] Balance check on `PuppyRaffle::withdrawFees` enables **griefers** to selfdestruct a contract to send ETH to the raffle, blocking withdrawals
+
+### Description:
+> The `PuppyRaffle::withdrawFees` function checks the totalFees equals the ETH balance of the contract (address(this).balance). Since this contract doesn't have a payable fallback or receive function, you'd think this wouldn't be possible, but a user could selfdesctruct a contract with ETH in it and force funds to the PuppyRaffle contract, breaking this check.
+
+```javascript
+    function withdrawFees() external {
+@>      require(address(this).balance == uint256(totalFees), "PuppyRaffle: There are currently players active!");
+        uint256 feesToWithdraw = totalFees;
+        totalFees = 0;
+        (bool success,) = feeAddress.call{value: feesToWithdraw}("");
+        require(success, "PuppyRaffle: Failed to withdraw fees");
+    }
+```
+
+### Impact: 
+>  This would prevent the feeAddress from withdrawing fees. A malicious user could see a withdrawFee transaction in the mempool, front-run it, and block the withdrawal by sending fees.
+
+### Proof of Concept:
+1. `PuppyRaffle` has 800 wei in it's balance, and 800 totalFees.
+2. Malicious user sends 1 wei via a `selfdestruct`
+2. `feeAddress` is no longer able to withdraw funds
+
+### Recommended Mitigation:
+> Remove the balance check on the PuppyRaffle::withdrawFees function.
+```diff
+    function withdrawFees() external {
+-       require(address(this).balance == uint256(totalFees), "PuppyRaffle: There are currently players active!");
+        uint256 feesToWithdraw = totalFees;
+        totalFees = 0;
+        (bool success,) = feeAddress.call{value: feesToWithdraw}("");
+        require(success, "PuppyRaffle: Failed to withdraw fees");
+    }
+```
+
+
+## [M-3] Smart Contract wallets raffle winner without a `receive` and `fallback` function might cause problems, this will block the start of new contest
 
 ### Description:
 > `PuppyRaffle::selectWinner` functions is responsible for resetting the lottery, if the winner is a smartcontract wallet that rejects the payment, the lottery would not be able to restart.<br>
@@ -370,8 +406,6 @@ function enterRaffle(address[] memory newPlayers) public payable {
 ### Recommended Mitigation:
 1. Do not allow smart contract wallet entrants (not recommended)
 2. Create a mapping of addresses -> payout so winners can pull their funds out themselves, putting the owness on the winner to claim their prize. (Recommended)
-
-
 
 
 ## [L-1] Solidity pragma should be specific and not wide
@@ -556,13 +590,43 @@ function selectWinner() external {
 ```
 
 
-## [S-#] TITLE (Root Cause + Impact)
+## [I-5] Event is missing `indexed` fields, hard to keep track.
 
 ### Description:
+> Index event fields make the field more quickly accessible to off-chain tools that parse events. However, note that each index field costs extra gas during emission, so it's not necessarily best to index the maximum allowed per event (three fields). Each event should use three indexed fields if there are three or more fields, and gas usage is not particularly of concern for the events in question. If there are fewer than three fields, all of the fields should be indexed.
 
-### Impact: 
-
-### Proof of Concept:
+### Instance:
+```javascript
+event RaffleEnter(address[] newPlayers);
+event RaffleRefunded(address player);
+event FeeAddressChanged(address newFeeAddress);
+```
 
 ### Recommended Mitigation:
+```diff
+- event RaffleEnter(address[] newPlayers);
+- event RaffleRefunded(address player);
+- event FeeAddressChanged(address newFeeAddress);
++ event RaffleEnter(address[] indexed newPlayers);
++ event RaffleRefunded(address indexed player);
++ event FeeAddressChanged(address indexed newFeeAddress);
+```
+
+
+## [I-6] `_isActivePlayer` is never used and should be removed, this will cause unnecessary gas wastage and bad for documentation
+
+### Description:
+The function `PuppyRaffle::_isActivePlayer` is never used and should be removed.
+
+### Recommended Mitigation:
+```diff
+-    function _isActivePlayer() internal view returns (bool) {
+-        for (uint256 i = 0; i < players.length; i++) {
+-            if (players[i] == msg.sender) {
+-                return true;
+-            }
+-        }
+-        return false;
+-    }
+```
 
