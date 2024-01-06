@@ -121,6 +121,14 @@ Logs:
 ### Description:
 > The **`PuppyRaffle::enterRaffle`** functions has a *for* loop that loops through `players` array to check for duplicate players. But the longer the `players` array is the longer the checks will be, so, the players joining very late will have to incur huge gas cost compared to those players who joins first. This gives a very huge advantage to earlier players. So more players will lead to more gas cost.
 
+```javascript
+@>  for (uint256 i = 0; i < players.length - 1; i++) {
+                for (uint256 j = i + 1; j < players.length; j++) {
+                    require(players[i] != players[j], "PuppyRaffle: Duplicate player");
+                }
+            }
+```
+
 ### Impact: 
 > The `gas cost` to enter raffle will dramatically increase as more players enter the raffle. This will discourage more players from entering the raffle.<br>
 > An Attacker may make `PuppyRaffle::players` array so big that no one else can enter the raffle, guranteeing themselves the win.
@@ -201,6 +209,93 @@ function enterRaffle(address[] memory newPlayers) public payable {
         emit RaffleEnter(newPlayers);
     }
 
+```
+
+
+## [L-1] Solidity pragma should be specific and not wide, 
+
+### Description:
+> Consider using a specific version of Solidity in your contracts instead of a wide version. For example, instead of `pragma solidity ^0.8.0;`, use `pragma solidity 0.8.0;`
+
+### Recommended Mitigation:
+```diff
+- pragma solidity ^0.7.6;
++ pragma solidity 0.7.6;
+```
+
+
+## [G-1] Unchanged state variables should be marked as `constant` or `immutable`.
+
+### Description:
+> Reading from constant/immutable variables costs us less gas compared to reading from storage variables.<br>
+
+### Instances:
+> `PuppyRaffle::raffleDuration` should be marked as `immutable`.<br>
+> `PuppyRaffle::commonImageUri` should be marked as `constant`.<br>
+> `PuppyRaffle::rareImageUri` should be marked as `constant`.<br>
+> `PuppyRaffle::legendaryImageUri` should be marked as `constant`.<br>
+
+### Recommended Mitigation:
+```diff
+- uint256 public raffleDuration;
++ uint256 public constant raffleDuration = ;
+```
+
+## [G-2] Should use cached array length instead of referencing `length` member of the storage array.
+
+### Description:
+> Detects for loops that use length member of some storage array in their loop condition and don't modify it. So to save some gas it is recomended to store the storage variables locally
+
+### Recommended Mitigation:
+```diff
++ uints256 playersLength = players.length
+for (uint256 i = 0; i < playersLength - 1; i++) {
+    for (uint256 j = i + 1; j < playersLength; j++) {
+        require(players[i] != players[j], "PuppyRaffle: Duplicate player");
+    } 
+}
+```
+
+
+## [I-1] Usage of outdated version of solidity is not recomended.
+
+### Description:
+> `solc` frequently releases new compiler versions. Using an old version prevents access to new Solidity security checks. We also recommend avoiding complex pragma statement.
+
+### Recommended Mitigation:
+Deploy with any of the following Solidity versions:
+* `0.8.20`
+
+Please see [slither](https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity) docs for more information.
+
+
+## [I-2] Missing checks for address(0) when assigning values to address state variables
+
+### Description:
+> Assigning values to address state variables without checking for `address(0)`.
+
+### Instances:
+- Found in src/PuppyRaffle.sol [Line: 62](src/PuppyRaffle.sol#L62)
+
+	```solidity
+	        feeAddress = _feeAddress;
+	```
+
+- Found in src/PuppyRaffle.sol [Line: 150](src/PuppyRaffle.sol#L150)
+
+	```solidity
+	        previousWinner = winner;
+	```
+
+- Found in src/PuppyRaffle.sol [Line: 168](src/PuppyRaffle.sol#L168)
+
+	```solidity
+	        feeAddress = newFeeAddress;
+	```
+
+### Recommended Mitigation:
+```javascript
+require(_feeAddress != address(0), zero address detected);
 ```
 
 
