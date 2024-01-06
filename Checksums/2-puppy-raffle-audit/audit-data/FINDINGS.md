@@ -148,6 +148,26 @@ function refund(uint256 playerIndex) public {
 > Can use `Openzeppelin::ReentrancyGuard`
 
 
+## [H-2] Weak Randomness in `PuppyRaffle::selectWinner`, allows the user to influence or predict the winner or the winning puppy
+
+### Description:
+> Hashing `msg.sender`, `block.timestamp`, `block.difficulty` together creates a predictable number, which is not a very good Random Number. Malicious users can exploit this vulnerability to predict the winner ahead of time. <br>
+Weak PRNG due to a modulo on block.timestamp, now or blockhash. These can be influenced by miners to some extent so they should be avoided.
+
+**Note:** this means users could frontrun this functions and call `refund` if htey are not the winner.
+
+### Impact: 
+Any user can influence the winner if the raffle, winning the money and selecting the `rarest` puppy making entire raffle worthless.
+
+### Proof of Concept:
+
+1. Validators can know ahead of thime the `block.timestamp` and `block.difficulty` and use that to predict when/how to participate. Check out [Blog on prevrandao](https://soliditydeveloper.com/prevrandao)
+2. User can mine and manipulate their `msg.sender` value to result in their address being used to generate winner!!
+3. Users can revert their `selectWinner` txn if they don't like the winner or resulting puppy.
+
+### Recommended Mitigation:
+1. Consider using a cryptographically provable RNG such a **Chainlink VRF**.
+
 
 ## [M-#] Unbounded For loop in **`PuppyRaffle::enterRaffle`** is a potential Denial of Service (DoS) atatck, leads to increament of gas cost for later entrants
 
