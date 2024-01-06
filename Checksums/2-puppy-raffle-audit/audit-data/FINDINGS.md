@@ -1,7 +1,20 @@
-## [H-#] In **`PuppyRaffle::refund`** external call is being made before the state is updated, this will become an easy target for **Reentancy** attack.
+## [H-1] In **`PuppyRaffle::refund`** external call is being made before the state is updated, this will become an easy target for **Reentancy** attack
 
 ### Description:
-> The **`PuppyRaffle::refund`** sends the refund value back to player before updating the `players` array. Due to this a malicious user can carry out a reentrancy attack using a malicious Smart contract to drain all the money present in `PuppyRaffle`. This will surely discourage the users from entring into the raffle.
+> The **`PuppyRaffle::refund`** doesn't follow **CEI**(Checks, Effects, Interactions) i.e. it sends the refund value back to player before updating the `players` array. Due to this a malicious user can carry out a reentrancy attack using a malicious Smart contract to drain all the money present in `PuppyRaffle`. This will surely discourage the users from entring into the raffle.
+
+```javascript
+function refund(uint256 playerIndex) public {
+        address playerAddress = players[playerIndex];
+        require(playerAddress == msg.sender, "PuppyRaffle: Only the player can refund");
+        require(playerAddress != address(0), "PuppyRaffle: Player already refunded, or is not active");
+
+@>      payable(msg.sender).sendValue(entranceFee);
+@>      players[playerIndex] = address(0);
+
+        emit RaffleRefunded(playerAddress);
+    }
+```
 
 
 ### Impact: 
@@ -212,7 +225,7 @@ function enterRaffle(address[] memory newPlayers) public payable {
 ```
 
 
-## [L-1] Solidity pragma should be specific and not wide, 
+## [L-1] Solidity pragma should be specific and not wide
 
 ### Description:
 > Consider using a specific version of Solidity in your contracts instead of a wide version. For example, instead of `pragma solidity ^0.8.0;`, use `pragma solidity 0.8.0;`
@@ -224,7 +237,7 @@ function enterRaffle(address[] memory newPlayers) public payable {
 ```
 
 
-## [G-1] Unchanged state variables should be marked as `constant` or `immutable`.
+## [G-1] Unchanged state variables should be marked as `constant` or `immutable`
 
 ### Description:
 > Reading from constant/immutable variables costs us less gas compared to reading from storage variables.<br>
@@ -244,7 +257,7 @@ function enterRaffle(address[] memory newPlayers) public payable {
 ## [G-2] Should use cached array length instead of referencing `length` member of the storage array.
 
 ### Description:
-> Detects for loops that use length member of some storage array in their loop condition and don't modify it. So to save some gas it is recomended to store the storage variables locally
+> Detects for loops that use length member of some storage array in their loop condition and don't modify it. So to save some gas it is recomended to store the storage variables locally, so that every time when we call those variables we read from memory, more gas efficient indeed.
 
 ### Recommended Mitigation:
 ```diff
@@ -259,7 +272,7 @@ function enterRaffle(address[] memory newPlayers) public payable {
 ```
 
 
-## [I-1] Usage of outdated version of solidity is not recomended.
+## [I-1] Usage of outdated version of solidity is not recomended
 
 ### Description:
 > `solc` frequently releases new compiler versions. Using an old version prevents access to new Solidity security checks. We also recommend avoiding complex pragma statement.
