@@ -398,6 +398,55 @@ require(_feeAddress != address(0), zero address detected);
 ```
 
 
+## [I-4] Use of "Magic numbers" are discouraged, it can be confusing to see random numbers pop out
+
+### Description:
+> It is the best practice to avoid using magic numbers as it often confuses people, it is much more readable if the numbers are given names.
+
+### Instance
+```javascript
+function selectWinner() external {
+        require(block.timestamp >= raffleStartTime + raffleDuration, "PuppyRaffle: Raffle not over");
+        require(players.length >= 4, "PuppyRaffle: Need at least 4 players");
+
+        // @Audit; weak Randomness
+        // soln: Chainlink VRF, commitREveal
+        uint256 winnerIndex =
+            uint256(keccak256(abi.encodePacked(msg.sender, block.timestamp, block.difficulty))) % players.length;
+        address winner = players[winnerIndex];
+        uint256 totalAmountCollected = players.length * entranceFee;
+@>      uint256 prizePool = (totalAmountCollected * 80) / 100;
+@>      uint256 fee = (totalAmountCollected * 20) / 100;
+        ...................
+}
+```
+
+### Recommended Mitigation:
+```diff
++uint256 public constant PRIZE_POOL_PERCENTAGE = 80;
++uint256 public constant FEE_PERCENTAGE = 20;
++uint256 public constant POOL_PRECISSION = 100;
+
+......
+function selectWinner() external {
+        require(block.timestamp >= raffleStartTime + raffleDuration, "PuppyRaffle: Raffle not over");
+        require(players.length >= 4, "PuppyRaffle: Need at least 4 players");
+
+        // @Audit; weak Randomness
+        // soln: Chainlink VRF, commitREveal
+        uint256 winnerIndex =
+            uint256(keccak256(abi.encodePacked(msg.sender, block.timestamp, block.difficulty))) % players.length;
+        address winner = players[winnerIndex];
+        uint256 totalAmountCollected = players.length * entranceFee;
+-       uint256 prizePool = (totalAmountCollected * 80) / 100;
+-       uint256 fee = (totalAmountCollected * 20) / 100;
++       uint256 prizePool = (totalAmountCollected * PRIZE_POOL_PERCENTAGE) / POOL_PRECISSION;
++       uint256 fee = (totalAmountCollected * FEE_PERCENTAGE) / POOL_PRECISSION;
+        .................
+}
+```
+
+
 ## [S-#] TITLE (Root Cause + Impact)
 
 ### Description:
