@@ -363,6 +363,21 @@ require(_feeAddress != address(0), zero address detected);
 ```
 
 
+## [I-3] `PuppyRaffle::selectWinner` doesn't follow CEI, which is not the best practice.
+
+### Description:
+> Its always best practice to keep code clean and follow CEI (Checks, Effects, Interactions) to avoid any possibel attacks.
+
+### Recommended Mitigation:
+```diff
+-        (bool success,) = winner.call{value: prizePool}("");
+-        require(success, "PuppyRaffle: Failed to send prize pool to winner");
+         _safeMint(winner, tokenId);
++        (bool success,) = winner.call{value: prizePool}("");
++        require(success, "PuppyRaffle: Failed to send prize pool to winner");
+```
+
+
 ## [S-#] TITLE (Root Cause + Impact)
 
 ### Description:
