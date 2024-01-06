@@ -249,8 +249,10 @@ function enterRaffle(address[] memory newPlayers) public payable {
 ### Recommended Mitigation:
 ```diff
 + uints256 playersLength = players.length
-for (uint256 i = 0; i < playersLength - 1; i++) {
-    for (uint256 j = i + 1; j < playersLength; j++) {
+-for (uint256 i = 0; i < players.length - 1; i++) {
++for (uint256 i = 0; i < playersLength - 1; i++) {
+-    for (uint256 j = i + 1; j < players.length; j++) {
++    for (uint256 j = i + 1; j < playersLength; j++) {
         require(players[i] != players[j], "PuppyRaffle: Duplicate player");
     } 
 }
