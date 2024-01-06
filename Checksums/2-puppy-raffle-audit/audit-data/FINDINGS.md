@@ -22,6 +22,11 @@ function refund(uint256 playerIndex) public {
 
 ### Proof of Concept:
 
+1. Users enters Raffle.
+2. Attacker sets up a contract with a `fallback` functions that calls `PuppyRaffle::refund`
+3. Attacker enters the raffle.
+4. Attacker calls `PuppyRaffle::refund` from contract draining all the money.
+
 <details>
 <summary>PoC- Attack Contract</summary>
 
