@@ -6,3 +6,6 @@
 ## Slither
 > slither . <br>
 > slither . --exclude-dependencies || Exclude Libraries <br>
+
+## Aderyn
+> aderyn /path/to/your/foundry/project/root/directory/
