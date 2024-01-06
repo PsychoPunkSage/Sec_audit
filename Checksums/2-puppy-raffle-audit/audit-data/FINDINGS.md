@@ -169,7 +169,95 @@ Any user can influence the winner if the raffle, winning the money and selecting
 1. Consider using a cryptographically provable RNG such a **Chainlink VRF**.
 
 
-## [M-#] Unbounded For loop in **`PuppyRaffle::enterRaffle`** is a potential Denial of Service (DoS) atatck, leads to increament of gas cost for later entrants
+## [H-3] Integer overflow of `PuppyRaffle::totalFees` is possible, this will lead to loss in fees.
+
+### Description:
+> In solidity versions prioi to `0.8.0` integers were subject to interger overflow.
+
+```javascript
+uint64 vari = type(uint64).max
+// Output: 18446744073709551615
+vari = vari + 1
+// Output: 0
+```
+
+### Impact: 
+> In `PuppyRaffle::selectWinner`, `totalFees` is used to accumulate all the fees for `feeAddress`, to be collected later by `PuppyRaffle::withdrawFees`. However, if the `totalfees` variable overflows, the `feeAddress` may not collect the correct amount of fees. This will cause fees to permanently stuck in the contract.
+
+### Proof of Concept:
+
+1. Make 300 people enter the raffle.
+2. Then check the fees being collected by `PuppyRaffle::totalFees` which indeed is less than the actual fees calculated.
+3. This will result in rest of the fees getting stuck to Raffle 
+
+<details>
+<summary>PoC- test func</summary>
+
+```javascript
+// paste in test/PuppyRaffleTest.t.sol
+function testOverflowFees() public {
+    address[] memory players = new address[](300);
+        for (uint256 i=0; i< 300; i++) {
+            players[i] = address(i);
+        }
+        puppyRaffle.enterRaffle{value: entranceFee*300}(players);
+        vm.warp(block.timestamp + duration + 1);
+        vm.roll(block.number + 1);
+        puppyRaffle.selectWinner();
+
+        uint256 a_fee = (entranceFee*300*20)/100;
+        console.log("uint64 (max)    ", type(uint64).max);
+        console.log("Fees: (Contrat) ", puppyRaffle.totalFees());
+        console.log("Fees: (Actual)  ", a_fee);
+
+        assert(a_fee > puppyRaffle.totalFees());
+        assert(a_fee > type(uint64).max);
+    }
+```
+</details>
+
+<details>
+<summary>Output</summary>
+
+```
+[PASS] testOverflowFees() (gas: 36734971)
+Logs:
+  uint64 (max)     18446744073709551615
+  Fees: (Contrat)  4659767778871345152
+  Fees: (Actual)   60000000000000000000
+```
+</details>
+
+4. You will now not be able to withdraw, due to this line in PuppyRaffle::withdrawFees:
+```javascript
+require(address(this).balance == uint256(totalFees), "PuppyRaffle: There are currently players active!");
+```
+
+Although you could use `selfdestruct` to send ETH to this contract in order for the values to match and withdraw the fees, this is clearly not what the protocol is intended to do.
+
+### Recommended Mitigation:
+1. Use a newer version of Solidity that does not allow integer overflows by default.
+```diff
+- pragma solidity ^0.7.6;
++ pragma solidity ^0.8.18;
+```
+Can use a library like OpenZeppelin's `SafeMath` to prevent integer overflows.
+
+2. Use a `uint256` instead of a `uint64` for `totalFees`
+```diff
+- uint64 public totalFees = 0;
++ uint256 public totalFees = 0;
+```
+
+3. Remove the balance check in `PuppyRaffle::withdrawFees`
+```diff
+- require(address(this).balance == uint256(totalFees), "PuppyRaffle: There are currently players active!");
+```
+This line also lead to one more vulnerability discussed ahead.
+
+4. Keep calling `PuppyRaffle::withdrawFees` periodically so that `totalFees` doesn't hit the upper limit. (This clearly no the way protocol intend to function)
+
+## [M-1] Unbounded For loop in **`PuppyRaffle::enterRaffle`** is a potential Denial of Service (DoS) atatck, leads to increament of gas cost for later entrants
 
 ### Description:
 > The **`PuppyRaffle::enterRaffle`** functions has a *for* loop that loops through `players` array to check for duplicate players. But the longer the `players` array is the longer the checks will be, so, the players joining very late will have to incur huge gas cost compared to those players who joins first. This gives a very huge advantage to earlier players. So more players will lead to more gas cost.
@@ -263,6 +351,27 @@ function enterRaffle(address[] memory newPlayers) public payable {
     }
 
 ```
+
+## [M-2] Smart Contract wallets raffle winner without a `receive` and `fallback` function might cause problems, this will block the start of new contest
+
+### Description:
+> `PuppyRaffle::selectWinner` functions is responsible for resetting the lottery, if the winner is a smartcontract wallet that rejects the payment, the lottery would not be able to restart.<br>
+> Moreover, users can easily call `selectWinner` function again and non-wallet entrants could enter, but it could cost a lot due to the duplicate checks and reset raffle become more challenging.
+
+### Impact: 
+> The `PuppyRaffle::selectWinner` fucntion will get reverted multiple times, making lottery reset difficult.<br>
+> True winners might loose the prize to someone else, which is not good for protocol reputation.
+
+### Proof of Concept:
+1. 10 smart contract wallets enter the lottery without a fallback or receive function.
+2. The lottery ends
+3. The `selectWinner` function wouldn't work, even though the lottery is over!
+
+### Recommended Mitigation:
+1. Do not allow smart contract wallet entrants (not recommended)
+2. Create a mapping of addresses -> payout so winners can pull their funds out themselves, putting the owness on the winner to claim their prize. (Recommended)
+
+
 
 
 ## [L-1] Solidity pragma should be specific and not wide
