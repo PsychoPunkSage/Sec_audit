@@ -11,8 +11,8 @@ contract Invariant is StdInvariant, Test {
     ERC20Mock poolToken;
     ERC20Mock weth;
 
-    int256 constant STARTING_X = 100e18; // Starting PoolToken
-    int256 constant STARTING_Y = 50e18; // // Starting WETH.
+    int256 constant STARTING_X = 100e18;// Starting PoolToken
+    int256 constant STARTING_Y = 50e18; // Starting WETH.
 
     PoolFactory factory;
     TSwapPool pool;
@@ -25,7 +25,7 @@ contract Invariant is StdInvariant, Test {
         // Jumpstart the pool:: Making Initial balance for the pool.
         poolToken.mint(address(this), uint256(STARTING_X));
         weth.mint(address(this), uint256(STARTING_Y));
-
+ 
         poolToken.approve(address(pool), type(uint256).max);
         weth.approve(address(pool), type(uint256).max);
         //  Deposit...
