@@ -65,7 +65,7 @@ contract Handler is Test {
     // Swap
     function swapPoolTokenForWethBasedOnOutputWeth(uint256 outputWeth) public {
         uint256 minWeth = pool.getMinimumWethDepositAmount();
-        outputWeth = bound(outputWeth, minWeth, type(uint64).max);
+        outputWeth = bound(outputWeth, minWeth, weth.balanceOf(address(pool)));
         if (outputWeth >= weth.balanceOf(address(pool))) {
             return;
         }
@@ -86,12 +86,20 @@ contract Handler is Test {
         expectedDeltaX = int256(poolTokenAmount);
 
         if (poolToken.balanceOf(swapper) < poolTokenAmount) {
-            poolToken.mint(swapper, poolTokenAmount - poolToken.balanceOf(swapper) + 1);
+            poolToken.mint(
+                swapper,
+                poolTokenAmount - poolToken.balanceOf(swapper) + 1
+            );
         }
 
         vm.startPrank(swapper);
         poolToken.approve(address(swapper), type(uint64).max);
-        pool.swapExactOutput(poolToken, weth, outputWeth, uint64(block.timestamp));
+        pool.swapExactOutput(
+            poolToken,
+            weth,
+            outputWeth,
+            uint64(block.timestamp)
+        );
         vm.stopPrank();
 
         // actual deltas

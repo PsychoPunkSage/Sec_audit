@@ -51,6 +51,6 @@ contract Invariant is StdInvariant, Test {
     }
 
     function invariant_constantProductFormulaStaysTheSame() public {
-        assert(handler.actualDeltaX() == handler.expectedDeltaX());
+        assertEq(handler.actualDeltaX(), handler.expectedDeltaX());
     }
 }
