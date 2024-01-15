@@ -33,8 +33,8 @@ contract Handler is Test {
         uint256 minWeth = pool.getMinimumWethDepositAmount();
         wethAmount = bound(wethAmount, minWeth, type(uint64).max);
 
-        startingY = int256(weth.balanceOf(address(this)));
-        startingX = int256(poolToken.balanceOf(address(this)));
+        startingY = int256(weth.balanceOf(address(pool)));
+        startingX = int256(poolToken.balanceOf(address(pool)));
         expectedDeltaY = int256(wethAmount);
         expectedDeltaX = int256(
             pool.getPoolTokensToDepositBasedOnWeth(wethAmount)
@@ -80,8 +80,8 @@ contract Handler is Test {
             return;
         }
 
-        startingY = int256(weth.balanceOf(address(this)));
-        startingX = int256(poolToken.balanceOf(address(this)));
+        startingY = int256(weth.balanceOf(address(pool)));
+        startingX = int256(poolToken.balanceOf(address(pool)));
         expectedDeltaY = int256(-1) * int256(outputWeth);
         expectedDeltaX = int256(poolTokenAmount);
 
