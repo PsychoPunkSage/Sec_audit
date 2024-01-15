@@ -49,4 +49,8 @@ contract Invariant is StdInvariant, Test {
         );
         targetContract(address(handler));
     }
+
+    function invariant_constantProductFormulaStaysTheSame() public {
+        assert(handler.actualDeltaX() == handler.expectedDeltaX());
+    }
 }
