@@ -55,8 +55,8 @@ contract Handler is Test {
         vm.stopPrank();
 
         // actual deltas
-        endingY = int256(weth.balanceOf(address(this)));
-        endingX = int256(poolToken.balanceOf(address(this)));
+        endingY = int256(weth.balanceOf(address(pool)));
+        endingX = int256(poolToken.balanceOf(address(pool)));
 
         actualDeltaX = int256(endingX) - int256(startingX);
         actualDeltaY = int256(endingY) - int256(startingY);
