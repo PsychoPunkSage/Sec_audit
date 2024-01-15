@@ -50,7 +50,11 @@ contract Invariant is StdInvariant, Test {
         targetContract(address(handler));
     }
 
-    function invariant_constantProductFormulaStaysTheSame() public {
+    function invariant_constantProductFormulaStaysTheSameX() public {
         assertEq(handler.actualDeltaX(), handler.expectedDeltaX());
+    }
+    
+    function invariant_constantProductFormulaStaysTheSameY() public {
+        assertEq(handler.actualDeltaY(), handler.expectedDeltaY());
     }
 }
