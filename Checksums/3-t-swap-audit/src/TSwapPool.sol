@@ -395,6 +395,7 @@ contract TSwapPool is ERC20 {
             revert TSwapPool__InvalidToken();
         }
 
+        // @Audits breaks protocol invariant
         swap_count++;
         if (swap_count >= SWAP_COUNT_MAX) {
             swap_count = 0;
