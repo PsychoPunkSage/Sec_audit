@@ -93,7 +93,7 @@ contract TSwapPool is ERC20 {
         string memory liquidityTokenName,
         string memory liquidityTokenSymbol
     ) ERC20(liquidityTokenName, liquidityTokenSymbol) {
-        // @Audit-I: 0-addr test
+        // @Done-Audit-I: 0-addr test
         i_wethToken = IERC20(wethToken);
         i_poolToken = IERC20(poolToken);
     }
@@ -115,14 +115,13 @@ contract TSwapPool is ERC20 {
         uint256 wethToDeposit,
         uint256 minimumLiquidityTokensToMint,
         uint256 maximumPoolTokensToDeposit,
-        uint64 deadline // @Audit-H: not being used...
+        uint64 deadline // @Done-Audit-H: not being used...
     )
         external
         revertIfZero(wethToDeposit)
         returns (uint256 liquidityTokensToMint)
     {
         if (wethToDeposit < MINIMUM_WETH_LIQUIDITY) {
-            // @Audit-I::> MINIMUM_WETH_LIQUIDITY -> Const so no need to emit....
             revert TSwapPool__WethDepositAmountTooLow(
                 MINIMUM_WETH_LIQUIDITY,
                 wethToDeposit
@@ -131,7 +130,7 @@ contract TSwapPool is ERC20 {
         if (totalLiquidityTokenSupply() > 0) {
             uint256 wethReserves = i_wethToken.balanceOf(address(this));
 
-            // @Audit-I: not being used...
+            // @Done-Audit-I: not being used...
             uint256 poolTokenReserves = i_poolToken.balanceOf(address(this));
             // Our invariant says weth, poolTokens, and liquidity tokens must always have the same ratio after the
             // initial deposit
@@ -182,7 +181,7 @@ contract TSwapPool is ERC20 {
                 wethToDeposit
             );
 
-            // @Audit-I ::> Better if it would be before `_addLiquidityMintAndTransfer` call.
+            // @DoneAudit-I ::> Better if it would be before `_addLiquidityMintAndTransfer` call.
             // Follow CEI
             liquidityTokensToMint = wethToDeposit;
         }
@@ -198,7 +197,7 @@ contract TSwapPool is ERC20 {
         uint256 liquidityTokensToMint
     ) private {
         _mint(msg.sender, liquidityTokensToMint);
-        // @Audit-L::> Wrong params... should be `LiquidityAdded(msg.sender, wethToDeposit, poolTokensToDeposit)`
+        // @Done-Audit-L::> Wrong params... should be `LiquidityAdded(msg.sender, wethToDeposit, poolTokensToDeposit)`
         emit LiquidityAdded(msg.sender, poolTokensToDeposit, wethToDeposit);
 
         // Interactions
