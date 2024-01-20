@@ -279,7 +279,7 @@ contract TSwapPool is ERC20 {
         // (totalWethOfPool * totalPoolTokensOfPool) + (wethToDeposit * totalPoolTokensOfPool) = k - (totalWethOfPool *
         // poolTokensToDeposit) - (wethToDeposit * poolTokensToDeposit)
 
-        // @Audits: magic numbers
+        // @Done-Audits: magic numbers
         uint256 inputAmountMinusFee = inputAmount * 997;
         uint256 numerator = inputAmountMinusFee * outputReserves;
         uint256 denominator = (inputReserves * 1000) + inputAmountMinusFee;
@@ -297,13 +297,13 @@ contract TSwapPool is ERC20 {
         revertIfZero(outputReserves)
         returns (uint256 inputAmount)
     {
-        // @Audit-High::> 10000??
+        // @Done-Audit-High::> 10000??
         return
             ((inputReserves * outputAmount) * 10000) /
             ((outputReserves - outputAmount) * 997);
     }
 
-    // @Audit::> Where is NatSpec....
+    // @Done-Audit::> Where is NatSpec....
     function swapExactInput(
         IERC20 inputToken,
         uint256 inputAmount,
@@ -311,11 +311,11 @@ contract TSwapPool is ERC20 {
         uint256 minOutputAmount,
         uint64 deadline
     )
-    // @Audits: Func not used internally 
+    // @Done-Audits: Func not used internally 
         public
         revertIfZero(inputAmount)
         revertIfDeadlinePassed(deadline)
-        // @Audit-L: output not used anywhere...
+        // @Done-Audit-L: output not used anywhere...
         returns (uint256 output)
     {
         uint256 inputReserves = inputToken.balanceOf(address(this));
