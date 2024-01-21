@@ -344,7 +344,7 @@ contract TSwapPool is ERC20 {
      * @param inputToken ERC20 token to pull from caller
      * @param outputToken ERC20 token to send to caller
      * @param outputAmount The exact amount of tokens to send to caller
-     @Audit-I :: missing params in natspec
+     @Done-Audit-I :: missing params in natspec
      */
     function swapExactOutput(
         IERC20 inputToken,
@@ -366,7 +366,7 @@ contract TSwapPool is ERC20 {
             inputReserves,
             outputReserves
         );
-        // @Audit::> need a max input amount.
+        // @Done-Audit::> need a max input amount.
         _swap(inputToken, inputAmount, outputToken, outputAmount);
     }
 
@@ -378,7 +378,7 @@ contract TSwapPool is ERC20 {
     function sellPoolTokens(
         uint256 poolTokenAmount
     ) external returns (uint256 wethAmount) {
-        // @Audit::> Swap exact input is req.
+        // @Done-Audit::> Swap exact input is req.
 
         return
             swapExactOutput(

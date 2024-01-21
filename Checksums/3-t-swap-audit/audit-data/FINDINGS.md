@@ -25,7 +25,7 @@ function getInputAmountBasedOnOutput(
 ```
 
 
-## [H-3] Lack of slippage protection in `TSwapPool::swapExactOutput` causes user to recieve way fewer tokens.
+## [H-2] Lack of slippage protection in `TSwapPool::swapExactOutput` causes user to recieve way fewer tokens.
 
 ### Description:
 > The `swapExactOutput` function doesn' provides any kind of slipage protection. This function is similar to what is done in `TSwapPool::swapExactInput`, where the function specify the `minOutputAmount`, the `swapExactOutput`  function should specify a `maxInputAmount`.
@@ -45,6 +45,8 @@ function getInputAmountBasedOnOutput(
 5. The transaction completes but the user sent the Pool 10000 USDC instead of 1000 USDC.
 
 ### Recommended Mitigation:
+>We should include a `maxInputAmount` ao that the user only have to send a specific amount, and can predict how much the have to spend in the pool.
+
 ```diff
 function swapExactOutput(
         IERC20 inputToken,
@@ -62,6 +64,48 @@ function swapExactOutput(
         _swap(inputToken, inputAmount, outputToken, outputAmount);
     }
 ```
+
+## [H-3] `TSwapPool::sellPoolToken` mismatches input and output tokens causing users to recieve the incorrect amount of tokens
+
+### Description:
+> The `sellPoolTokens` function is intended to allow users to easily sell poolTokens and receive WETH in exchange. Users indicate how many pool tokens they're willing to sell in the `poolTokenAmount` parameter. However, the function currently mismatches the swapped amount.<br>
+> This is due to the fact that `swapExactOutput` function is called, whereas `swapExactInput` function is the one to be called. Because user specify the exact amount of token, not amount.
+
+### Impact: 
+>  Uwer will swap wrong amount of pool tokens, which is severe disruption of protocol functionality.
+> 
+### Proof of Concept:
+#POC
+
+### Recommended Mitigation:
+
+> Consider changing the implementation to use `swapExactInput` instead of `swapExactOutput`. Note, ths would also require changing the `selllPoolTokens` function to accept a new parameter (i.e. `minWethToReceive` to be passed to `swapExactInput`)
+
+```diff
+function sellPoolTokens(
+        uint256 poolTokenAmount,
++       uint256 minWethToReceive
+    ) external returns (uint256 wethAmount) {
+-       return
+-           swapExactOutput(
+-               i_poolToken,
+-               i_wethToken,
+-               poolTokenAmount,
+-               uint64(block.timestamp)
+-           );
++        return
++           swapExactInput(
++               i_poolToken,
++               poolTokenAmount,
++               i_wethToken,
++               minWethToReceive,
++               uint64(block.timestamp)
++           );
+    }
+```
+
+Additionally it would be wise to add a deadline to the function, as there is currently no deadline.
+
 
 ## [M-1] `TSwapPool::deposit` is missing deadline check, can cause transaction to complete even after the deadline has been reached
 
@@ -361,3 +405,4 @@ function deposit(
 ### Proof of Concept:
 
 ### Recommended Mitigation:
+
