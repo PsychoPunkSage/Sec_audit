@@ -1,3 +1,162 @@
+---
+title: Protocol Audit Report
+author: PsychoPunkSage
+date: Jan 21, 2024
+header-includes:
+  - \usepackage{titling}
+  - \usepackage{graphicx}
+---
+
+\begin{titlepage}
+    \centering
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.5\textwidth]{logo.pdf} 
+    \end{figure}
+    \vspace*{2cm}
+    {\Huge\bfseries TSwap Protocol Audit Report\par}
+    \vspace{1cm}
+    {\Large Version 1.0\par}
+    \vspace{2cm}
+    {\Large\itshape PsychoPunkSage\par}
+    \vfill
+    {\large \today\par}
+\end{titlepage}
+
+\maketitle
+
+<!-- Your report starts here! -->
+
+Prepared by: [PsychoPunkSage](https://github.com/PsychoPunkSage)
+Lead Auditors: 
+- PsychoPunkSage
+
+# Table of Contents
+- [Table of Contents](#table-of-contents)
+- [Protocol Summary](#protocol-summary)
+- [Disclaimer](#disclaimer)
+- [Risk Classification](#risk-classification)
+- [Audit Details](#audit-details)
+  - [Scope](#scope)
+  - [Roles](#roles)
+- [Executive Summary](#executive-summary)
+  - [Issues found](#issues-found)
+- [Findings](#findings)
+- [High](#high)
+  - [\[H-1\]  Incorrect fee calculation in `TSwapPool::getInputAmountBasedOnOutput` causes protocol to take too many tokens from users, resulting in lost fees](#h-1--incorrect-fee-calculation-in-tswappoolgetinputamountbasedonoutput-causes-protocol-to-take-too-many-tokens-from-users-resulting-in-lost-fees)
+    - [Description:](#description)
+    - [Impact:](#impact)
+    - [Recommended Mitigation:](#recommended-mitigation)
+  - [\[H-2\] Lack of slippage protection in `TSwapPool::swapExactOutput` causes user to recieve way fewer tokens.](#h-2-lack-of-slippage-protection-in-tswappoolswapexactoutput-causes-user-to-recieve-way-fewer-tokens)
+    - [Description:](#description-1)
+    - [Impact:](#impact-1)
+    - [Proof of Concept:](#proof-of-concept)
+    - [Recommended Mitigation:](#recommended-mitigation-1)
+  - [\[H-3\] `TSwapPool::sellPoolToken` mismatches input and output tokens causing users to recieve the incorrect amount of tokens](#h-3-tswappoolsellpooltoken-mismatches-input-and-output-tokens-causing-users-to-recieve-the-incorrect-amount-of-tokens)
+    - [Description:](#description-2)
+    - [Impact:](#impact-2)
+    - [Recommended Mitigation:](#recommended-mitigation-2)
+  - [\[H-4\] In `TSwapPool::_swap` the extra tokens given to user after every `swapCount` breaks the protocol invariant of `x * y = k`](#h-4-in-tswappool_swap-the-extra-tokens-given-to-user-after-every-swapcount-breaks-the-protocol-invariant-of-x--y--k)
+    - [Description:](#description-3)
+    - [Impact:](#impact-3)
+    - [Proof of Concept:](#proof-of-concept-1)
+    - [Recommended Mitigation:](#recommended-mitigation-3)
+- [Medium](#medium)
+  - [\[M-1\] `TSwapPool::deposit` is missing deadline check, can cause transaction to complete even after the deadline has been reached](#m-1-tswappooldeposit-is-missing-deadline-check-can-cause-transaction-to-complete-even-after-the-deadline-has-been-reached)
+    - [Description:](#description-4)
+    - [Impact:](#impact-4)
+    - [Proof of Concept:](#proof-of-concept-2)
+    - [Recommended Mitigation:](#recommended-mitigation-4)
+- [Low](#low)
+  - [\[L-1\] `TSwapPool::LiquidityAdded` has paramaters out of order, events will emit wrong information](#l-1-tswappoolliquidityadded-has-paramaters-out-of-order-events-will-emit-wrong-information)
+    - [Description:](#description-5)
+    - [Impact:](#impact-5)
+    - [Recommended Mitigation:](#recommended-mitigation-5)
+  - [\[L-2\] PUSH0 is not supported by all chains](#l-2-push0-is-not-supported-by-all-chains)
+    - [Description:](#description-6)
+  - [\[L-3\] Default value returned by `TSwapPool::swapExactInput` results in incorrect return value given.](#l-3-default-value-returned-by-tswappoolswapexactinput-results-in-incorrect-return-value-given)
+    - [Description:](#description-7)
+    - [Impact:](#impact-6)
+    - [Recommended Mitigation:](#recommended-mitigation-6)
+- [Informational](#informational)
+  - [\[I-1\] `PoolFactory__PoolDoesNotExist` is not used anywhere, it should be removed.](#i-1-poolfactory__pooldoesnotexist-is-not-used-anywhere-it-should-be-removed)
+    - [Description:](#description-8)
+    - [Recommended Mitigation](#recommended-mitigation-7)
+  - [\[I-2\] Lacking zero address checks](#i-2-lacking-zero-address-checks)
+    - [Description:](#description-9)
+    - [Recommended Mitigation:](#recommended-mitigation-8)
+  - [\[I-3\] `PoolFactory__createPool` should use `.symbol()` instead of `.name()`](#i-3-poolfactory__createpool-should-use-symbol-instead-of-name)
+    - [Description:](#description-10)
+    - [Recommended Mitigation:](#recommended-mitigation-9)
+  - [\[I-4\] If an event has more than parameters, 3 must be indexed](#i-4-if-an-event-has-more-than-parameters-3-must-be-indexed)
+    - [Description:](#description-11)
+    - [Recommended Mitigation:](#recommended-mitigation-10)
+  - [\[I-5\] It is always a good practice to follow `CEI` (Check, Execute, Interact)](#i-5-it-is-always-a-good-practice-to-follow-cei-check-execute-interact)
+    - [Description:](#description-12)
+    - [Recommended Mitigation:](#recommended-mitigation-11)
+  - [\[I-6\] Use of "Magic numbers" are discouraged, it can be confusing to see random numbers pop out](#i-6-use-of-magic-numbers-are-discouraged-it-can-be-confusing-to-see-random-numbers-pop-out)
+    - [Description:](#description-13)
+    - [Recommended Mitigation:](#recommended-mitigation-12)
+  - [\[I-7\] Each and every functions should have its own `Natspec`](#i-7-each-and-every-functions-should-have-its-own-natspec)
+    - [Description:](#description-14)
+    - [Recommended Mitigation:](#recommended-mitigation-13)
+  - [\[I-8\] Functions not used internally could be marked external](#i-8-functions-not-used-internally-could-be-marked-external)
+    - [Description:](#description-15)
+    - [Recommended Mitigation:](#recommended-mitigation-14)
+- [Gas](#gas)
+  - [\[G-1\] `TSwapPool:deposit:poolTokenReserves` is never used, so it should be removed from the code.](#g-1-tswappooldepositpooltokenreserves-is-never-used-so-it-should-be-removed-from-the-code)
+    - [Description:](#description-16)
+    - [Recommended Mitigation:](#recommended-mitigation-15)
+
+# Protocol Summary
+
+This project is meant to be a permissionless way for users to swap assets between each other at a fair price. You can think of T-Swap as a decentralized asset/token exchange (DEX). T-Swap is known as an Automated Market Maker (AMM) because it doesn't use a normal "order book" style exchange, instead it uses "Pools" of an asset. It is similar to Uniswap.
+
+# Disclaimer
+
+I make all effort to find as many vulnerabilities in the code in the given time period, but holds no responsibilities for the findings provided in this document. A security audit is not an endorsement of the underlying business or product. The audit was time-boxed and the review of the code was solely on the security aspects of the Solidity implementation of the contracts.
+
+# Risk Classification
+
+|            |        | Impact |        |     |
+| ---------- | ------ | ------ | ------ | --- |
+|            |        | High   | Medium | Low |
+|            | High   | H      | H/M    | M   |
+| Likelihood | Medium | H/M    | M      | M/L |
+|            | Low    | M      | M/L    | L   |
+
+We use the [CodeHawks](https://docs.codehawks.com/hawks-auditors/how-to-evaluate-a-finding-severity) severity matrix to determine severity. See the documentation for more details.
+
+# Audit Details 
+**The findings described below in this doc is base on following commit hash:**
+```e643a8d4c2c802490976b538dd009b351b1c8dda```
+
+## Scope
+```
+./src/
+#-- PoolFactory.sol
+#-- TSwapPool.sol
+``` 
+
+## Roles
+**Liquidity Providers**- Users who have liquidity deposited into the pools. Their shares are represented by the LP ERC20 tokens. They gain a 0.3% fee every time a swap is made.
+
+**Users**- Users who want to swap tokens.
+
+# Executive Summary
+## Issues found
+| Severity | Number of issues found |
+| -------- | ---------------------- |
+| High     | 4                      |
+| Medium   | 1                      |
+| Low      | 3                      |
+| Info     | 8                      |
+| Gas      | 1                      |
+| Total    | 17                     |
+
+# Findings
+# High
+
 ## [H-1]  Incorrect fee calculation in `TSwapPool::getInputAmountBasedOnOutput` causes protocol to take too many tokens from users, resulting in lost fees
 
 ### Description:
@@ -181,6 +340,7 @@ function testInvariantBroken() public {
 ```
 
 
+# Medium
 ## [M-1] `TSwapPool::deposit` is missing deadline check, can cause transaction to complete even after the deadline has been reached
 
 ### Description:
@@ -210,6 +370,8 @@ function deposit(
         returns (uint256 liquidityTokensToMint)
 ```
 
+
+# Low 
 ## [L-1] `TSwapPool::LiquidityAdded` has paramaters out of order, events will emit wrong information
 
 ### Description:
@@ -274,6 +436,8 @@ function swapExactInput(
     }
 ```
 
+
+# Informational
 ## [I-1] `PoolFactory__PoolDoesNotExist` is not used anywhere, it should be removed.
 
 ### Description:
@@ -437,7 +601,7 @@ function swapExactInput(
         returns (uint256 output)
 ```
 
-
+# Gas 
 ## [G-1] `TSwapPool:deposit:poolTokenReserves` is never used, so it should be removed from the code.
 
 ### Description:
@@ -466,8 +630,3 @@ function deposit(
 
 -           uint256 poolTokenReserves = i_poolToken.balanceOf(address(this));
 ```
-
-
-
-
-
