@@ -107,6 +107,83 @@ function sellPoolTokens(
 Additionally it would be wise to add a deadline to the function, as there is currently no deadline.
 
 
+## [H-4] In `TSwapPool::_swap` the extra tokens given to user after every `swapCount` breaks the protocol invariant of `x * y = k`
+
+### Description:
+> Protocol follws the strict invariant of `x * y = k`. where:
+> - `x`: balance of pool token.
+> - `y`: balance of WETH token
+> - `k`: constant product of two balances.
+
+> This mean that whenever the balances change in the protocol, the ratio of the amount of tokens should remain constant i.e. `k`. However, this is broken due to the extra incentive in the `TSwapPool::_swap` function. Meaning, overtime protocol funds will be drained.
+
+### Impact: 
+> A user could maliciously drain the protocol funds by doing a lot of swaps and collecting th extra incentive given out by the protocol.
+
+> Most simply put, the protocol's core invariant is broken.
+
+> Following block of code is resposible for issue:
+
+```javascript
+swap_count++;
+if (swap_count >= SWAP_COUNT_MAX) {
+    swap_count = 0;
+    outputToken.safeTransfer(msg.sender, 1_000_000_000_000_000_000);
+}   
+```
+
+### Proof of Concept:
+1.  User swaps 10 times, and the collects extra incentive of `1_000_000_000_000_000_000` tokens.
+2.  The user continues to swap ubtil all the protocol funds are drained.
+
+<details>
+<summary>PoC</summary>
+
+```javascript
+function testInvariantBroken() public {
+    vm.startPrank(liquidityProvider);
+    weth.approve(address(pool), 100e18);
+    poolToken.approve(address(pool), 100e18);
+    pool.deposit(100e18, 100e18, 100e18, uint64(block.timestamp));
+    vm.stopPrank();
+
+    uint256 outputWeth = 1e17;
+    int256 startingY = int256(weth.balanceOf(address(pool)));
+    int256 expectedDeltaY = int256(-10) * int256(outputWeth);
+
+    // Swap
+    vm.startPrank(user);
+    poolToken.approve(address(pool), type(uint64).max);
+    for (uint i = 0; i < 10; i++) {
+        pool.swapExactOutput(
+            poolToken,
+            weth,
+            outputWeth,
+            uint64(block.timestamp)
+        );
+    }
+    vm.stopPrank();
+
+    int256 endingY = int256(weth.balanceOf(address(pool)));
+    int256 actualDeltaY = int256(endingY) - int256(startingY);
+    assertEq(actualDeltaY, expectedDeltaY);
+}
+```
+
+</details>
+
+### Recommended Mitigation:
+> Remove the extra incentive. If you want to keep it, we should account for the change  in the `x * y = k` protocol invariant. Or, we should set aside tokens in the same way we do with fees.
+
+```diff
+- swap_count++;
+- if (swap_count >= SWAP_COUNT_MAX) {
+-     swap_count = 0;
+-     outputToken.safeTransfer(msg.sender, 1_000_000_000_000_000_000);
+- }
+```
+
+
 ## [M-1] `TSwapPool::deposit` is missing deadline check, can cause transaction to complete even after the deadline has been reached
 
 ### Description:
@@ -395,6 +472,8 @@ function deposit(
 
 -           uint256 poolTokenReserves = i_poolToken.balanceOf(address(this));
 ```
+
+
 
 ## [S-#] TITLE (Root Cause + Impact)
 
