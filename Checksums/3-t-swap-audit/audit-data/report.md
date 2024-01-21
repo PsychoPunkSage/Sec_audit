@@ -28,8 +28,6 @@ header-includes:
 <!-- Your report starts here! -->
 
 Prepared by: [PsychoPunkSage](https://github.com/PsychoPunkSage)
-Lead Auditors: 
-- PsychoPunkSage
 
 # Table of Contents
 - [Table of Contents](#table-of-contents)
@@ -129,6 +127,7 @@ We use the [CodeHawks](https://docs.codehawks.com/hawks-auditors/how-to-evaluate
 
 # Audit Details 
 **The findings described below in this doc is base on following commit hash:**
+
 ```e643a8d4c2c802490976b538dd009b351b1c8dda```
 
 ## Scope
