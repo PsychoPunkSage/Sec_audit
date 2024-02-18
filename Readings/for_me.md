@@ -9,3 +9,7 @@
 
 ## Aderyn
 > aderyn /path/to/your/foundry/project/root/directory/
+
+## Upgradehub
+>  [Upgradehub](upgradehub.xyx) is a smart contract tracker that shows who upgraded a smart contract and when it was upgraded and what changes were made.
+> It requires **Smart Contract Address**
