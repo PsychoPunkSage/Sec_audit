@@ -21,9 +21,6 @@ contract PoolFactory {
     error PoolFactory__PoolAlreadyExists(address tokenAddress);
     error PoolFactory__PoolDoesNotExist(address tokenAddress);
 
-    /*//////////////////////////////////////////////////////////////
-                            STATE VARIABLES
-    //////////////////////////////////////////////////////////////*/
     mapping(address token => address pool) private s_pools;
     mapping(address pool => address token) private s_tokens;
 
