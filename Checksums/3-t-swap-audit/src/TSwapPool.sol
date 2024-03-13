@@ -418,9 +418,6 @@ contract TSwapPool is ERC20 {
         return false;
     }
 
-    /*//////////////////////////////////////////////////////////////
-                   EXTERNAL AND PUBLIC VIEW AND PURE
-    //////////////////////////////////////////////////////////////*/
     function getPoolTokensToDepositBasedOnWeth(
         uint256 wethToDeposit
     ) public view returns (uint256) {
