@@ -86,10 +86,6 @@ contract TSwapPool is ERC20 {
         i_poolToken = IERC20(poolToken);
     }
 
-    /*//////////////////////////////////////////////////////////////
-                        ADD AND REMOVE LIQUIDITY
-    //////////////////////////////////////////////////////////////*/
-
     /// @notice Adds liquidity to the pool
     /// @dev The invariant of this function is that the ratio of WETH, PoolTokens, and LiquidityTokens is the same
     /// before and after the transaction
