@@ -43,9 +43,6 @@ contract TSwapPool is ERC20 {
     uint256 private swap_count = 0;
     uint256 private constant SWAP_COUNT_MAX = 10;
 
-    /*//////////////////////////////////////////////////////////////
-                                 EVENTS
-    //////////////////////////////////////////////////////////////*/
     event LiquidityAdded(
         address indexed liquidityProvider,
         uint256 wethDeposited,
