@@ -37,9 +37,6 @@ contract TSwapPool is ERC20 {
 
     using SafeERC20 for IERC20;
 
-    /*//////////////////////////////////////////////////////////////
-                            STATE VARIABLES
-    //////////////////////////////////////////////////////////////*/
     IERC20 private immutable i_wethToken;
     IERC20 private immutable i_poolToken;
     uint256 private constant MINIMUM_WETH_LIQUIDITY = 1_000_000_000;
@@ -311,12 +308,14 @@ contract TSwapPool is ERC20 {
         uint256 minOutputAmount,
         uint64 deadline
     )
-    // @Done-Audits: Func not used internally 
         public
+        // @Done-Audits: Func not used internally
         revertIfZero(inputAmount)
         revertIfDeadlinePassed(deadline)
-        // @Done-Audit-L: output not used anywhere...
-        returns (uint256 output)
+        returns (
+            // @Done-Audit-L: output not used anywhere...
+            uint256 output
+        )
     {
         uint256 inputReserves = inputToken.balanceOf(address(this));
         uint256 outputReserves = outputToken.balanceOf(address(this));
