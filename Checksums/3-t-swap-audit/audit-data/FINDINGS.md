@@ -4,7 +4,7 @@
 > The `getInputAmountBasedOnOutput` function is intended to calculate the amount of tokens a user should deposit given an amount of tokens of output tokens. However, the function currently miscalculates the resulting amount. When calculating the fee, it scales the amount by 10_000 instead of 1_000
 
 ### Impact: 
-> Protocol takes more fees than expected from users.
+> Protocol takes more fees than expected from user.
 
 ### Recommended Mitigation:
 ```diff
