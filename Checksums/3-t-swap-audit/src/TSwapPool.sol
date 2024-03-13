@@ -75,9 +75,6 @@ contract TSwapPool is ERC20 {
         _;
     }
 
-    /*//////////////////////////////////////////////////////////////
-                               FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
     constructor(
         address poolToken,
         address wethToken,
