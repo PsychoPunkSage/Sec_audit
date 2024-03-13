@@ -28,9 +28,6 @@ contract PoolFactory {
 
     event PoolCreated(address tokenAddress, address poolAddress);
 
-    /*//////////////////////////////////////////////////////////////
-                               FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
     constructor(address wethToken) {
         i_wethToken = wethToken;
     }
