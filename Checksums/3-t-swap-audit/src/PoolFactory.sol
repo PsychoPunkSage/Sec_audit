@@ -32,9 +32,6 @@ contract PoolFactory {
         i_wethToken = wethToken;
     }
 
-    /*//////////////////////////////////////////////////////////////
-                           EXTERNAL FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
     function createPool(address tokenAddress) external returns (address) {
         if (s_pools[tokenAddress] != address(0)) {
             revert PoolFactory__PoolAlreadyExists(tokenAddress);
