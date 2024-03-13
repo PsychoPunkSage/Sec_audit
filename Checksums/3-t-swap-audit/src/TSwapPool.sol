@@ -141,7 +141,6 @@ contract TSwapPool is ERC20 {
                 );
             }
 
-            // We do the same thing for liquidity tokens. Similar math.
             liquidityTokensToMint =
                 (wethToDeposit * totalLiquidityTokenSupply()) /
                 wethReserves;
