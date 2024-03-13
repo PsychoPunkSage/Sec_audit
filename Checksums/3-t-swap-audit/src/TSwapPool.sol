@@ -233,10 +233,6 @@ contract TSwapPool is ERC20 {
         i_poolToken.safeTransfer(msg.sender, poolTokensToWithdraw);
     }
 
-    /*//////////////////////////////////////////////////////////////
-                              GET PRICING
-    //////////////////////////////////////////////////////////////*/
-
     function getOutputAmountBasedOnInput(
         uint256 inputAmount,
         uint256 inputReserves,
